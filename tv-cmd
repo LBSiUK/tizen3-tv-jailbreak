@@ -1,0 +1,8 @@
+#!/bin/bash
+# usage: tv-cmd 'shell command on TV' — ensures module service alive, then exec
+for i in 1 2 3; do
+  curl -s -m 4 -o /dev/null http://192.168.0.85:9192/ && break
+  python3 "$(dirname "$0")/relaunch.py" >/dev/null 2>&1
+  sleep 3
+done
+curl -s -G -m 60 "http://192.168.0.85:9192/x" --data-urlencode "c=$(printf %s "$1" | base64 | tr -d '\n')"

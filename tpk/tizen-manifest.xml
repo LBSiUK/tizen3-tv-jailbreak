@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" api-version="3.0" package="leonbtpk01" version="1.0.0">
+  <service-app appid="leonbtpk01.tvrootd" exec="bin/tvrootd" type="capp" multiple="false" nodisplay="true" taskmanage="false">
+    <label>tvrootd</label>
+    <icon>icon.png</icon>
+  </service-app>
+</manifest>

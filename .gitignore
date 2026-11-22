@@ -1,0 +1,22 @@
+# never commit key material or big third-party blobs
+*.key
+*.p12
+*.pem
+venv/
+data/
+WATT-master/
+certificate-generator*/
+certificate-encryptor*/
+certmgr/
+Certificate-Manager*
+__pycache__/
+*.pyc
+beacon.log
+freemytv.wgt
+TizenBrewStandalone*.wgt
+xver/
+fmtv/
+cmp/
+reis*
+*.zip
+.DS_Store

@@ -1,0 +1,8 @@
+Package : sdb
+Version : 4.2.36
+OS : ubuntu-64
+Build-host-os : ubuntu-64
+Maintainer : Adhavan M <adhavan.m@samsung.com>
+Source : sdb
+Uncompressed-size : 6751116
+Description : Smart Development Bridge for device management
